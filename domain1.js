@@ -1,187 +1,287 @@
 (() => {
   const scenarios = [
-    "an ecommerce platform",
-    "a healthcare analytics system",
-    "a fintech transaction service",
-    "a media streaming backend",
-    "an IoT telemetry pipeline",
-    "a logistics tracking platform",
-    "an online learning portal",
-    "a SaaS CRM product",
-    "a gaming leaderboard service",
-    "a travel booking engine",
-    "a digital banking app",
-    "a content publishing platform",
-    "a retail recommendation API",
-    "a manufacturing control dashboard",
-    "a customer support platform",
-    "a payment settlement workflow",
-    "a B2B procurement portal",
-    "a social networking feature",
-    "a real-time bidding service",
-    "a compliance reporting system"
+    "a regional ecommerce company",
+    "a healthcare analytics startup",
+    "a fintech payment processor",
+    "a media streaming provider",
+    "a logistics SaaS platform",
+    "an online education company",
+    "a global travel booking site",
+    "a public sector agency",
+    "a manufacturing data platform",
+    "a digital banking team",
+    "a social networking product",
+    "a B2B procurement portal"
   ];
 
   const patterns = [
     {
       task: "1.1",
-      q: (s) => `A team operating ${s} runs a three-tier application in a VPC. The database must not be reachable from the internet. Which design best meets this requirement?`,
+      q: (s) => `${s} hosts a web application in a VPC. The database must never be directly reachable from the internet. Which design is best?`,
       opts: [
-        "Place the DB in a public subnet with a restrictive security group",
-        "Place the DB in private subnets and allow inbound only from the application-tier security group",
-        "Use a network ACL that allows only TCP 443 from 0.0.0.0/0",
-        "Attach an internet gateway directly to the DB subnet"
+        "Place the DB in private subnets and allow inbound only from the app tier security group",
+        "Place the DB in a public subnet and restrict with NACLs",
+        "Expose the DB with an internet gateway and TLS",
+        "Use a NAT gateway in front of the DB"
       ],
-      ans: 1,
-      explain: "Private subnets with security-group-based app-to-DB access prevent direct internet reachability."
+      ans: 0,
+      explain: "Private subnets and source-restricted security groups prevent direct internet access to the database."
+    },
+    {
+      task: "1.1",
+      q: (s) => `${s} requires private connectivity from EC2 to S3 without using NAT gateways or internet routing. Which service should be used?`,
+      opts: [
+        "S3 gateway VPC endpoint",
+        "Internet gateway",
+        "Transit gateway",
+        "CloudFront origin access control"
+      ],
+      ans: 0,
+      explain: "An S3 gateway endpoint enables private VPC-to-S3 routing without IGW or NAT for that traffic."
     },
     {
       task: "1.2",
-      q: (s) => `An EC2 workload for ${s} needs temporary permissions to write to a specific S3 bucket. What is the most secure approach?`,
+      q: (s) => `${s} needs temporary credentials for EC2 instances to write to a specific S3 bucket. Which approach is most secure?`,
       opts: [
-        "Store access keys in user data",
-        "Attach an IAM role to the EC2 instance profile with least-privilege permissions",
-        "Create an IAM user and rotate long-term keys monthly",
-        "Share the account root access key across instances"
+        "Attach an IAM role to the instance profile with least-privilege bucket permissions",
+        "Store access keys in application config",
+        "Use a shared IAM user across all instances",
+        "Use the root account access key"
       ],
-      ans: 1,
-      explain: "Instance profiles provide temporary credentials and avoid embedded long-term access keys."
+      ans: 0,
+      explain: "EC2 instance profiles provide short-lived credentials and avoid embedded long-term keys."
+    },
+    {
+      task: "1.2",
+      q: (s) => `${s} wants users from an external identity provider to access AWS accounts centrally. Which architecture is most appropriate?`,
+      opts: [
+        "Federation through IAM Identity Center",
+        "Long-term IAM users in every account",
+        "Root account sharing",
+        "Security group-based access management"
+      ],
+      ans: 0,
+      explain: "IAM Identity Center supports federated access and centralized permission management across accounts."
+    },
+    {
+      task: "1.2",
+      q: (s) => `${s} needs cross-account access from a CI account into a production account with no static keys. What should be used?`,
+      opts: [
+        "AssumeRole with AWS STS",
+        "Copy IAM user keys into CI secrets",
+        "Use one shared root user",
+        "Security group references"
+      ],
+      ans: 0,
+      explain: "STS AssumeRole provides temporary, auditable credentials for cross-account access."
     },
     {
       task: "1.3",
-      q: (s) => `A central security team for ${s} must ensure member accounts in AWS Organizations cannot disable CloudTrail. Which control should be used?`,
+      q: (s) => `${s} must prevent member accounts in AWS Organizations from disabling CloudTrail. Which control should be applied?`,
       opts: [
-        "Permission boundaries",
         "Service control policies (SCPs)",
-        "Route table rules",
-        "Session tags only"
+        "Bucket policies only",
+        "NACL deny rules",
+        "Parameter Store policies"
       ],
-      ans: 1,
-      explain: "SCPs set organization-level guardrails, including explicit deny controls for protected actions."
+      ans: 0,
+      explain: "SCPs define guardrails across accounts/OUs and can deny protected actions like trail deletion."
+    },
+    {
+      task: "1.3",
+      q: (s) => `${s} wants continuous compliance checks for controls such as encrypted EBS volumes and approved instance types. Which service should be used?`,
+      opts: [
+        "AWS Config",
+        "Amazon Inspector",
+        "Amazon Athena",
+        "AWS Backup"
+      ],
+      ans: 0,
+      explain: "AWS Config tracks resource configuration and evaluates against rules for ongoing compliance."
+    },
+    {
+      task: "1.3",
+      q: (s) => `${s} needs threat-detection findings from CloudTrail, DNS, and VPC flow data across accounts. Which managed service fits best?`,
+      opts: [
+        "Amazon GuardDuty",
+        "AWS Glue",
+        "Amazon MQ",
+        "AWS DMS"
+      ],
+      ans: 0,
+      explain: "GuardDuty provides managed threat detection using multiple AWS telemetry sources."
     },
     {
       task: "1.4",
-      q: (s) => `${s} stores sensitive objects in S3 and requires encryption keys managed and auditable through AWS KMS. Which option is best?`,
+      q: (s) => `${s} stores sensitive objects in S3 and requires KMS key policy controls and auditability. Which encryption mode is best?`,
       opts: [
-        "SSE-S3",
         "SSE-KMS",
-        "No encryption with bucket policy restrictions",
-        "Client compression only"
+        "SSE-S3 only",
+        "No encryption",
+        "Client compression"
       ],
-      ans: 1,
-      explain: "SSE-KMS integrates with KMS key policies and auditing controls."
+      ans: 0,
+      explain: "SSE-KMS enables customer-managed key controls and KMS integration for auditing and governance."
+    },
+    {
+      task: "1.4",
+      q: (s) => `${s} must store database passwords securely and rotate them automatically. Which service is most appropriate?`,
+      opts: [
+        "AWS Secrets Manager",
+        "Amazon S3 metadata",
+        "EC2 user data",
+        "CloudWatch dashboard"
+      ],
+      ans: 0,
+      explain: "Secrets Manager is designed for secure secret storage, retrieval, and rotation workflows."
+    },
+    {
+      task: "1.4",
+      q: (s) => `${s} needs private API Gateway access from VPC workloads only. Which pattern should be used?`,
+      opts: [
+        "Private REST API with interface VPC endpoint",
+        "Edge-optimized API open to the internet",
+        "Public API plus NAT only",
+        "ALB with no API Gateway"
+      ],
+      ans: 0,
+      explain: "Private APIs are accessed through interface endpoints over private network paths."
     },
     {
       task: "1.5",
-      q: (s) => `Developers supporting ${s} need to avoid storing plaintext database credentials in code. Which service is recommended?`,
+      q: (s) => `${s} needs protection against common web exploits and application-layer request filtering. Which service should be applied?`,
       opts: [
-        "Store credentials in a private Git repository",
-        "AWS Secrets Manager with rotation",
-        "EC2 tags for passwords",
-        "Manual email distribution"
-      ],
-      ans: 1,
-      explain: "Secrets Manager is designed for secure secret storage, retrieval, and optional rotation."
-    },
-    {
-      task: "1.6",
-      q: (s) => `Workloads for ${s} in private subnets need private network access to S3 without using the public internet. What should be used?`,
-      opts: [
-        "Internet gateway",
-        "NAT instance",
-        "Gateway VPC endpoint for S3",
-        "Site-to-Site VPN"
-      ],
-      ans: 2,
-      explain: "S3 gateway endpoints allow private routing from VPC subnets to S3 without IGW or NAT requirements."
-    },
-    {
-      task: "1.7",
-      q: (s) => `${s} exposes a public web application and needs Layer 7 filtering plus managed DDoS protection. Which combination is best?`,
-      opts: [
-        "AWS WAF with AWS Shield",
-        "AWS Backup with AWS Config",
-        "CloudTrail with Athena",
-        "EFS with DataSync"
-      ],
-      ans: 0,
-      explain: "AWS WAF mitigates common web attacks and AWS Shield provides DDoS protection capabilities."
-    },
-    {
-      task: "1.8",
-      q: (s) => `Auditors for ${s} need a log of AWS API activity for governance and investigations. Which service is required?`,
-      opts: [
-        "Amazon CloudTrail",
-        "Amazon EventBridge",
-        "Amazon Route 53",
-        "AWS X-Ray"
-      ],
-      ans: 0,
-      explain: "CloudTrail records AWS API activity and supports governance and audit use cases."
-    },
-    {
-      task: "1.9",
-      q: (s) => `The platform team for ${s} wants account-level guardrails to prevent accidental public S3 exposure. Which setting should be enabled?`,
-      opts: [
-        "S3 Requester Pays",
-        "S3 Block Public Access",
-        "S3 Transfer Acceleration",
-        "S3 Batch Operations"
-      ],
-      ans: 1,
-      explain: "S3 Block Public Access provides centralized controls that override public bucket/object policy exposure."
-    },
-    {
-      task: "1.10",
-      q: (s) => `${s} includes a mobile app that needs user sign-up/sign-in with social providers and token-based access. Which service fits?`,
-      opts: [
-        "Amazon Cognito",
-        "Amazon Macie",
-        "AWS Directory Service AD Connector",
-        "AWS GuardDuty"
-      ],
-      ans: 0,
-      explain: "Amazon Cognito supports user pools, federation, and application authentication flows."
-    },
-    {
-      task: "1.11",
-      q: (s) => `Security operations for ${s} wants managed threat detection findings across AWS accounts. Which service should be enabled?`,
-      opts: [
-        "AWS GuardDuty",
+        "AWS WAF",
         "AWS DataSync",
-        "AWS Snowball",
-        "Amazon MQ"
+        "Amazon EMR",
+        "AWS Transfer Family"
       ],
       ans: 0,
-      explain: "GuardDuty provides threat-detection findings using signals such as CloudTrail and network telemetry."
+      explain: "AWS WAF is designed to filter HTTP(S) requests and mitigate common web attack patterns."
     },
     {
-      task: "1.12",
-      q: (s) => `${s} must reduce EC2 management-plane attack surface. Which two actions are best?`,
+      task: "1.5",
+      q: (s) => `${s} wants centralized visibility and prioritization of security findings from multiple services. Which service helps aggregate this?`,
       opts: [
-        "Use Systems Manager Session Manager and restrict direct SSH ingress",
-        "Open TCP 22 to 0.0.0.0/0 for faster operations",
-        "Apply IAM least privilege to administration workflows",
-        "Disable CloudTrail to reduce log volume"
+        "AWS Security Hub",
+        "Amazon EFS",
+        "AWS AppSync",
+        "AWS Ground Station"
+      ],
+      ans: 0,
+      explain: "Security Hub aggregates and normalizes findings from integrated security services."
+    },
+    {
+      task: "1.5",
+      q: (s) => `${s} must identify and classify sensitive data in S3 buckets such as PII. Which managed service should be enabled?`,
+      opts: [
+        "Amazon Macie",
+        "Amazon SES",
+        "Amazon Route 53",
+        "AWS Device Farm"
+      ],
+      ans: 0,
+      explain: "Macie analyzes S3 data to discover and classify sensitive information."
+    },
+    {
+      task: "1.5",
+      q: (s) => `${s} needs to ensure all S3 buckets in an account remain non-public by default and protected from policy mistakes. Which setting should be enabled?`,
+      opts: [
+        "S3 Block Public Access",
+        "S3 Object Lock only",
+        "S3 Event Notifications",
+        "S3 Requester Pays"
+      ],
+      ans: 0,
+      explain: "Block Public Access enforces account/bucket-level controls to prevent accidental public exposure."
+    },
+    {
+      task: "1.5",
+      q: (s) => `${s} wants to reduce exposed SSH ports and still allow secure shell access to EC2 for operations. Which two actions are best?`,
+      opts: [
+        "Use Systems Manager Session Manager for shell access",
+        "Open TCP 22 from 0.0.0.0/0",
+        "Apply least-privilege IAM for admin actions",
+        "Disable CloudTrail logging"
       ],
       multi: true,
       ans: [0, 2],
-      explain: "Session Manager removes need for broad SSH exposure, and least-privilege IAM limits administrative risk."
+      explain: "Session Manager avoids broad inbound SSH, and least-privilege IAM constrains admin permissions."
     },
     {
-      task: "1.13",
-      q: (s) => `${s} uses customer managed KMS keys and must restrict key usage to specific IAM roles. What should be configured?`,
+      task: "1.5",
+      q: (s) => `${s} requires all public endpoints to use managed TLS certificates with automatic renewal. Which AWS service should provide certificates?`,
       opts: [
-        "KMS key policy and IAM policy conditions",
-        "Subnet route tables",
-        "Auto Scaling lifecycle hooks",
-        "CloudFront cache policies"
+        "AWS Certificate Manager (ACM)",
+        "AWS IAM Access Analyzer",
+        "Amazon Inspector",
+        "AWS Budgets"
       ],
       ans: 0,
-      explain: "KMS authorization is controlled through key policies plus IAM permissions/conditions."
+      explain: "ACM provides managed certificate issuance and renewal for integrated AWS services."
+    },
+    {
+      task: "1.5",
+      q: (s) => `${s} must enforce that only encrypted EBS volumes can be created by workload teams. Which governance mechanism is most suitable at org scale?`,
+      opts: [
+        "SCP deny for unencrypted volume creation",
+        "NACL rule updates",
+        "Route table restrictions",
+        "CloudFront behaviors"
+      ],
+      ans: 0,
+      explain: "SCP guardrails can block noncompliant API actions across member accounts."
+    },
+    {
+      task: "1.5",
+      q: (s) => `${s} needs to ensure KMS keys are usable only from requests that originate through a specific VPC endpoint. Which control should be applied?`,
+      opts: [
+        "KMS key policy conditions on source VPC endpoint",
+        "Subnet ACLs only",
+        "S3 bucket versioning",
+        "Auto Scaling lifecycle hooks"
+      ],
+      ans: 0,
+      explain: "KMS key policy conditions can restrict key usage context, including source endpoint constraints."
+    },
+    {
+      task: "1.5",
+      q: (s) => `${s} must retain immutable API audit records for investigations and compliance. Which service is foundational for this requirement?`,
+      opts: [
+        "AWS CloudTrail",
+        "AWS X-Ray",
+        "Amazon Forecast",
+        "AWS Batch"
+      ],
+      ans: 0,
+      explain: "CloudTrail records AWS API activity and is core for security auditing and investigation workflows."
+    },
+    {
+      task: "1.5",
+      q: (s) => `${s} requires network-level filtering and inspection for centralized egress controls between private subnets and external destinations. Which service is best aligned?`,
+      opts: [
+        "AWS Network Firewall",
+        "Amazon SQS",
+        "Amazon Athena",
+        "AWS Global Accelerator"
+      ],
+      ans: 0,
+      explain: "AWS Network Firewall provides managed network traffic filtering and inspection capabilities."
+    },
+    {
+      task: "1.5",
+      q: (s) => `${s} wants to detect unintended internet exposure paths by continuously analyzing resource access configurations. Which service helps with this objective?`,
+      opts: [
+        "IAM Access Analyzer",
+        "Amazon ElastiCache",
+        "AWS Glue Data Catalog",
+        "Amazon WorkSpaces"
+      ],
+      ans: 0,
+      explain: "IAM Access Analyzer helps identify external access and public/cross-account exposure risks."
     }
   ];
-  
+
   function normalizeText(value) {
     return String(value || "")
       .toLowerCase()

@@ -113,6 +113,22 @@
   /* Timer */
   .timer { display: flex; align-items: center; gap: 6px; color: #889; font-size: 0.9rem; }
   .timer svg { width: 16px; height: 16px; fill: #889; }
+  .exam-panel { background: #1a2634; border-radius: 12px; padding: 14px; margin-top: 14px; }
+  .exam-summary { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.8rem; color: #bcc; margin-bottom: 10px; }
+  .exam-summary span { background: #0f1923; border-radius: 8px; padding: 6px 10px; }
+  .palette { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
+  .palette-btn {
+    border: 1px solid #2a3a4a;
+    background: #0f1923;
+    color: #d1d5db;
+    border-radius: 8px;
+    padding: 8px 0;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .palette-btn.answered { border-color: #22c55e; color: #22c55e; }
+  .palette-btn.marked { border-color: #ef4444; color: #ef4444; }
+  .palette-btn.current { border-color: #ff9900; background: #2a2010; color: #ff9900; font-weight: 700; }
 
   /* Responsive */
   @media (max-width: 600px) {
@@ -174,8 +190,8 @@
   <div id="quiz-screen" class="hidden">
     <div class="stats">
       <div class="stat"><div class="num" id="s-question">-</div><div class="label">Question</div></div>
-      <div class="stat"><div class="num" id="s-correct" style="color:#22c55e">0</div><div class="label">Correct</div></div>
-      <div class="stat"><div class="num" id="s-wrong" style="color:#ef4444">0</div><div class="label">Wrong</div></div>
+      <div class="stat"><div class="num" id="s-correct" style="color:#22c55e">0</div><div class="label" id="s-correct-label">Correct</div></div>
+      <div class="stat"><div class="num" id="s-wrong" style="color:#ef4444">0</div><div class="label" id="s-wrong-label">Wrong</div></div>
       <div class="stat">
         <div class="timer" id="s-timer"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 11h-2V7h2v6zm0 4h-2v-2h2v2z"/></svg><span id="timer-text">00:00</span></div>
         <div class="label">Time</div>
@@ -193,9 +209,18 @@
 
     <div class="actions">
       <button class="btn-flag hidden" id="btn-flag" onclick="toggleFlag()" title="Report an error in this question via GitHub"><span class="flag-icon"></span> Report error</button>
+      <button class="btn btn-outline hidden" id="btn-clear" onclick="clearCurrentResponse()">Clear</button>
       <button class="btn btn-outline hidden" id="btn-prev" onclick="prevQuestion()">Prev</button>
       <button class="btn hidden" id="btn-submit" onclick="submitMulti()">Submit</button>
       <button class="btn hidden" id="btn-next" onclick="nextQuestion()">Next</button>
+    </div>
+    <div class="exam-panel hidden" id="exam-panel">
+      <div class="exam-summary">
+        <span id="sum-answered">Answered: 0</span>
+        <span id="sum-marked">Marked: 0</span>
+        <span id="sum-unanswered">Unanswered: 0</span>
+      </div>
+      <div class="palette" id="question-palette"></div>
     </div>
   </div>
 
@@ -366,8 +391,9 @@ function correctAnswerTexts(q) {
 }
 
 function conceptFamilyKey(q) {
-  const answers = correctAnswerTexts(q).sort().join('|');
-  return `${q.domain}|${answers}`;
+  // Treat each exam task as its own concept family so official runs
+  // spread across unique task objectives before repeating templates.
+  return `${q.domain}|${q.task || 'na'}`;
 }
 
 function auditDefinitionLike(text) {
@@ -468,6 +494,8 @@ let selectedDomain = "all";
 let shuffleEnabled = true;
 let lastQuizSet = [];
 let agentRun = null;
+let reviewMarks = new Set();
+let remainingSeconds = 0;
 const GITHUB_REPO = 'Empyrz901/aws_pract_quiz';
 const EXAM_WEIGHTS = { 1: 0.30, 2: 0.26, 3: 0.24, 4: 0.20 };
 const OFFICIAL_EXAM_HISTORY_KEY = 'awsQuizRecentOfficial65';
@@ -808,9 +836,10 @@ function pickDiverse(pool, count, doShuffle = true, options = {}) {
       else if (conceptSeen < conceptCap) score += 0.5;
       else score -= 8;
 
-      if (taskSeen === 0) score += 1.4;
-      else if (taskSeen === 1) score += 0.4;
-      else score -= 0.7 * taskSeen;
+      if (taskSeen === 0) score += 2.1;
+      else if (count >= 50) score -= 8 * taskSeen;
+      else if (taskSeen === 1) score += 0.2;
+      else score -= 2.2 * taskSeen;
 
       if (targetStyleCounts) {
         const target = targetStyleCounts[style] || 0;
@@ -876,7 +905,7 @@ function buildOfficialSimulationQuiz(pool, doShuffle = true) {
     const drawn = pickDiverse(domainPool, scoredTargets[domain], doShuffle, {
       targetStyleCounts: domainStyleTargets,
       targetMultiCount: Math.round(scoredBlueprint.multiTarget * EXAM_WEIGHTS[domain]),
-      conceptCap: 2,
+      conceptCap: 1,
       initialConceptCounts: scoredConceptCounts,
       usedClusters: scoredClusters,
       recentPenaltyMaps
@@ -898,7 +927,7 @@ function buildOfficialSimulationQuiz(pool, doShuffle = true) {
       {
         targetStyleCounts: scoredBlueprint.styleCounts,
         targetMultiCount: scoredBlueprint.multiTarget,
-        conceptCap: 2,
+        conceptCap: 1,
         initialConceptCounts: scoredConceptCounts,
         usedClusters: scoredClusters,
         recentPenaltyMaps
@@ -975,6 +1004,8 @@ function startQuiz() {
 
   officialSimulation = false;
   scoredQuestionIndices = new Set();
+  reviewMarks = new Set();
+  remainingSeconds = 0;
 
   // Use weighted draw for official-length when all domains selected
   if (count === 65 && selectedDomain === "all") {
@@ -988,7 +1019,7 @@ function startQuiz() {
     quiz = pickDiverse(pool, count, doShuffle, {
       targetStyleCounts: genericBlueprint.styleCounts,
       targetMultiCount: genericBlueprint.multiTarget,
-      conceptCap: count >= 50 ? 2 : 1
+      conceptCap: 1
     });
     scoredQuestionIndices = new Set(Array.from({ length: quiz.length }, (_, i) => i));
   }
@@ -1123,6 +1154,23 @@ function exportLastQuizSetMarkdown() {
 
 function startTimer() {
   clearInterval(timerInterval);
+  if (officialSimulation) {
+    remainingSeconds = 130 * 60;
+    const mm = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+    const ss = String(remainingSeconds % 60).padStart(2, '0');
+    document.getElementById('timer-text').textContent = `${mm}:${ss}`;
+    timerInterval = setInterval(() => {
+      remainingSeconds--;
+      const m = String(Math.floor(Math.max(remainingSeconds, 0) / 60)).padStart(2, '0');
+      const s = String(Math.max(remainingSeconds, 0) % 60).padStart(2, '0');
+      document.getElementById('timer-text').textContent = `${m}:${s}`;
+      if (remainingSeconds <= 0) {
+        clearInterval(timerInterval);
+        showResults();
+      }
+    }, 1000);
+    return;
+  }
   timerInterval = setInterval(() => {
     seconds++;
     const m = String(Math.floor(seconds/60)).padStart(2,'0');
@@ -1158,6 +1206,45 @@ function buildStoredResponse(q, picks, counted) {
 function persistOfficialResponse(picks) {
   const normalizedPicks = Array.isArray(picks) ? [...picks] : [];
   results[current] = buildStoredResponse(quiz[current], normalizedPicks, scoredQuestionIndices.has(current));
+  updateOfficialExamPanel();
+}
+
+function isAnsweredIndex(i) {
+  const stored = results[i];
+  return !!(stored && Array.isArray(stored._picks) && stored._picks.length > 0);
+}
+
+function gotoQuestion(i) {
+  if (i < 0 || i >= quiz.length) return;
+  current = i;
+  renderQuestion();
+}
+
+function updateOfficialExamPanel() {
+  const panel = document.getElementById('exam-panel');
+  if (!officialSimulation) {
+    panel.classList.add('hidden');
+    return;
+  }
+
+  panel.classList.remove('hidden');
+  const answeredCount = results.filter((r) => r && Array.isArray(r._picks) && r._picks.length > 0).length;
+  const markedCount = reviewMarks.size;
+  const unansweredCount = quiz.length - answeredCount;
+  document.getElementById('sum-answered').textContent = `Answered: ${answeredCount}`;
+  document.getElementById('sum-marked').textContent = `Marked: ${markedCount}`;
+  document.getElementById('sum-unanswered').textContent = `Unanswered: ${unansweredCount}`;
+
+  const palette = document.getElementById('question-palette');
+  palette.innerHTML = quiz.map((_, i) => {
+    const classes = [
+      'palette-btn',
+      i === current ? 'current' : '',
+      isAnsweredIndex(i) ? 'answered' : '',
+      reviewMarks.has(i) ? 'marked' : ''
+    ].filter(Boolean).join(' ');
+    return `<button class="${classes}" onclick="gotoQuestion(${i})">${i + 1}</button>`;
+  }).join('');
 }
 
 function renderQuestion() {
@@ -1167,13 +1254,21 @@ function renderQuestion() {
   answered = officialSimulation ? false : alreadyAnswered;
   multiSelections = storedResponse && Array.isArray(storedResponse._picks) ? [...storedResponse._picks] : [];
   document.getElementById('s-question').textContent = `${current+1}/${quiz.length}`;
-  document.getElementById('s-correct').textContent = officialSimulation ? '-' : score;
-  document.getElementById('s-wrong').textContent = officialSimulation ? '-' : wrong;
-  document.getElementById('progress-bar').style.width = `${((current)/quiz.length)*100}%`;
+  if (officialSimulation) {
+    const answeredCount = results.filter((r) => r && Array.isArray(r._picks) && r._picks.length > 0).length;
+    document.getElementById('s-correct').textContent = answeredCount;
+    document.getElementById('s-wrong').textContent = reviewMarks.size;
+    document.getElementById('s-correct-label').textContent = 'Answered';
+    document.getElementById('s-wrong-label').textContent = 'Marked';
+  } else {
+    document.getElementById('s-correct').textContent = score;
+    document.getElementById('s-wrong').textContent = wrong;
+    document.getElementById('s-correct-label').textContent = 'Correct';
+    document.getElementById('s-wrong-label').textContent = 'Wrong';
+  }
+  document.getElementById('progress-bar').style.width = `${((current + 1)/quiz.length)*100}%`;
   document.getElementById('q-domain').textContent = DOMAIN_NAMES[q.domain] + ` \u2022 Task ${q.task}`;
-  const scoredHint = officialSimulation
-    ? ` \u2022 ${scoredQuestionIndices.has(current) ? 'Scored' : 'Unscored'}`
-    : '';
+  const scoredHint = '';
   document.getElementById('q-number').textContent = `Question ${current+1} of ${quiz.length}${scoredHint}`;
   document.getElementById('q-text').textContent = q.q;
 
@@ -1229,16 +1324,29 @@ function renderQuestion() {
   }
 
   document.getElementById('btn-flag').classList.remove('hidden');
+  document.getElementById('btn-clear').classList.toggle('hidden', !officialSimulation);
   document.getElementById('btn-prev').classList.toggle('hidden', current === 0);
   document.getElementById('btn-submit').classList.add('hidden');
   document.getElementById('btn-next').classList.remove('hidden');
   if (officialSimulation) {
+    const flagBtn = document.getElementById('btn-flag');
+    flagBtn.innerHTML = reviewMarks.has(current)
+      ? '<span class="flag-icon"></span> Unmark Review'
+      : '<span class="flag-icon"></span> Mark for Review';
+    flagBtn.title = 'Mark or unmark this question for review';
     document.getElementById('btn-next').textContent = current < quiz.length - 1 ? 'Next' : 'Finish Exam';
   } else if (alreadyAnswered) {
+    const flagBtn = document.getElementById('btn-flag');
+    flagBtn.innerHTML = '<span class="flag-icon"></span> Report error';
+    flagBtn.title = 'Report an error in this question via GitHub';
     document.getElementById('btn-next').textContent = current < quiz.length - 1 ? 'Next' : 'See Results';
   } else {
+    const flagBtn = document.getElementById('btn-flag');
+    flagBtn.innerHTML = '<span class="flag-icon"></span> Report error';
+    flagBtn.title = 'Report an error in this question via GitHub';
     document.getElementById('btn-next').textContent = current < quiz.length - 1 ? 'Next' : 'Finish';
   }
+  updateOfficialExamPanel();
 }
 
 function selectOption(idx) {
@@ -1363,8 +1471,14 @@ function submitMulti() {
 }
 
 function showPostAnswer() {
-  document.getElementById('s-correct').textContent = officialSimulation ? '-' : score;
-  document.getElementById('s-wrong').textContent = officialSimulation ? '-' : wrong;
+  if (officialSimulation) {
+    const answeredCount = results.filter((r) => r && Array.isArray(r._picks) && r._picks.length > 0).length;
+    document.getElementById('s-correct').textContent = answeredCount;
+    document.getElementById('s-wrong').textContent = reviewMarks.size;
+  } else {
+    document.getElementById('s-correct').textContent = score;
+    document.getElementById('s-wrong').textContent = wrong;
+  }
 
   const exp = document.getElementById('q-explanation');
   if (shouldRevealAnswersDuringQuiz()) {
@@ -1378,6 +1492,7 @@ function showPostAnswer() {
   document.getElementById('btn-submit').classList.add('hidden');
   document.getElementById('btn-next').classList.remove('hidden');
   document.getElementById('btn-next').textContent = current < quiz.length - 1 ? 'Next' : 'See Results';
+  updateOfficialExamPanel();
 }
 
 function prevQuestion() {
@@ -1390,6 +1505,13 @@ function nextQuestion() {
 }
 
 function toggleFlag() {
+  if (officialSimulation) {
+    if (reviewMarks.has(current)) reviewMarks.delete(current);
+    else reviewMarks.add(current);
+    renderQuestion();
+    return;
+  }
+
   const q = quiz[current];
   const letters = 'ABCDE';
   const ansIdxs = q.multi ? q.ans : [q.ans];
@@ -1423,6 +1545,13 @@ ${q.explain}
   window.open(`https://github.com/${GITHUB_REPO}/issues/new?title=${title}&body=${body}&labels=flagged-question`, '_blank');
 }
 
+function clearCurrentResponse() {
+  if (!officialSimulation) return;
+  multiSelections = [];
+  persistOfficialResponse([]);
+  renderQuestion();
+}
+
 function showResults() {
   if (officialSimulation) {
     results = quiz.map((q, i) => {
@@ -1448,8 +1577,9 @@ function showResults() {
 
   const scoredTotal = officialSimulation ? 50 : quiz.length;
   const pct = Math.round((score / scoredTotal) * 100);
-  const m = String(Math.floor(seconds/60)).padStart(2,'0');
-  const s = String(seconds%60).padStart(2,'0');
+  const elapsed = officialSimulation ? ((130 * 60) - Math.max(remainingSeconds, 0)) : seconds;
+  const m = String(Math.floor(elapsed/60)).padStart(2,'0');
+  const s = String(elapsed%60).padStart(2,'0');
 
   // Domain breakdown
   const domainScores = {};
@@ -1482,7 +1612,7 @@ function showResults() {
 
   const el = document.getElementById('results-screen');
   const summaryLine = officialSimulation
-    ? 'Official simulation mode: 65 total questions (50 scored + 15 unscored). Percent shown is based on scored questions only.'
+    ? 'Exam simulation mode: 65-question session, timed at 130 minutes. Review based on your submitted responses.'
     : 'Official SAA-C03 scoring is scaled (100-1000, passing score 720). This practice quiz reports percent correct.';
   const agentLine = agentRun && !agentRun.active
     ? '<p style="color:#22c55e">Agent attempt completed (human-like pacing).</p>'
@@ -1513,6 +1643,8 @@ function showResults() {
 
 function restart() {
   agentRun = null;
+  reviewMarks = new Set();
+  remainingSeconds = 0;
   document.getElementById('results-screen').classList.add('hidden');
   document.getElementById('quiz-screen').classList.add('hidden');
   document.getElementById('start-screen').classList.remove('hidden');
@@ -1524,6 +1656,8 @@ function retryWrong() {
   if (wrongQs.length === 0) { restart(); return; }
   quiz = shuffleEnabled ? shuffle([...wrongQs]) : [...wrongQs];
   officialSimulation = false;
+  reviewMarks = new Set();
+  remainingSeconds = 0;
   scoredQuestionIndices = new Set(Array.from({ length: quiz.length }, (_, i) => i));
   current = 0; score = 0; wrong = 0; results = new Array(quiz.length).fill(null); answered = false; seconds = 0;
   document.getElementById('results-screen').classList.add('hidden');
