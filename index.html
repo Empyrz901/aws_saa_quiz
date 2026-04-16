@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AWS SAA-C03 Practice Quiz</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: #cbd5e1;
+      --accent: #0b6bcb;
+      --good: #0f766e;
+      --bad: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(160deg, #eef3fb 0%, #f8fafc 45%, #eef6f6 100%);
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 24px auto;
+      padding: 0 16px 24px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(2, 6, 23, 0.06);
+    }
+    h1 { margin: 0 0 10px; font-size: 1.6rem; }
+    p { margin: 0 0 10px; color: var(--muted); }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 14px;
+    }
+    input[type="number"] {
+      width: 100px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 0.95rem;
+    }
+    button {
+      border: 0;
+      border-radius: 9px;
+      padding: 9px 14px;
+      cursor: pointer;
+      color: white;
+      background: var(--accent);
+      font-weight: 600;
+    }
+    button.secondary { background: #334155; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .hidden { display: none; }
+    .qmeta {
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .qtext {
+      font-size: 1.08rem;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    .opt {
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+    .opt:hover { border-color: #94a3b8; }
+    .opt input { margin-right: 8px; }
+    .bar {
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .bar > div {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #0b6bcb, #0891b2);
+      transition: width 0.2s ease;
+    }
+    .feedback { margin-top: 10px; }
+    .feedback.ok { color: var(--good); }
+    .feedback.bad { color: var(--bad); }
+    .result {
+      margin-top: 14px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+    }
+    .list { margin: 8px 0 0; padding-left: 18px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="setupCard">
+      <h1>AWS SAA-C03 Practice Quiz</h1>
+      <p>Scenario-focused prep for AWS Solutions Architect - Associate.</p>
+      <div class="row">
+        <label for="questionCount">Questions:</label>
+        <input id="questionCount" type="number" min="5" max="65" step="1" value="65">
+        <button id="startBtn">Start Quiz</button>
+      </div>
+      <p id="bankInfo"></p>
+    </div>
+
+    <div class="card hidden" id="quizCard">
+      <div class="qmeta" id="qMeta"></div>
+      <div class="bar"><div id="progressBar"></div></div>
+      <div class="qtext" id="qText"></div>
+      <form id="optionsForm"></form>
+      <div id="feedback" class="feedback"></div>
+      <div class="row">
+        <button class="secondary" id="prevBtn" type="button">Previous</button>
+        <button class="secondary" id="nextBtn" type="button">Next</button>
+        <button id="submitBtn" type="button">Finish Exam</button>
+      </div>
+    </div>
+
+    <div class="card hidden" id="resultCard">
+      <h2>Results</h2>
+      <p id="scoreLine"></p>
+      <div class="result" id="review"></div>
+      <div class="row">
+        <button id="restartBtn" type="button">Start New Quiz</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="domain1.js"></script>
+  <script src="domain2.js"></script>
+  <script src="domain3.js"></script>
+  <script src="domain4.js"></script>
+  <script>
+    const rawBank = [
+      ...(window.domain1Questions || []),
+      ...(window.domain2Questions || []),
+      ...(window.domain3Questions || []),
+      ...(window.domain4Questions || [])
+    ];
+    const DOMAIN_WEIGHTS = {
+      1: 30,
+      2: 26,
+      3: 24,
+      4: 20
+    };
+
+    const setupCard = document.getElementById("setupCard");
+    const quizCard = document.getElementById("quizCard");
+    const resultCard = document.getElementById("resultCard");
+    const questionCountInput = document.getElementById("questionCount");
+    const bankInfo = document.getElementById("bankInfo");
+
+    const qMeta = document.getElementById("qMeta");
+    const qText = document.getElementById("qText");
+    const optionsForm = document.getElementById("optionsForm");
+    const progressBar = document.getElementById("progressBar");
+    const feedback = document.getElementById("feedback");
+
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const submitBtn = document.getElementById("submitBtn");
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+
+    const scoreLine = document.getElementById("scoreLine");
+    const review = document.getElementById("review");
+
+    let session = [];
+    let answers = {};
+    let idx = 0;
+    let immediateFeedback = false;
+    
+    function normalizeText(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function questionSignature(question) {
+      const optText = (question.opts || []).map((opt) => normalizeText(opt)).join("|");
+      return `${question.domain}|${question.task}|${normalizeText(question.q)}|${optText}`;
+    }
+
+    function dedupeQuestions(list) {
+      const seen = new Set();
+      const out = [];
+      list.forEach((q) => {
+        const sig = questionSignature(q);
+        if (seen.has(sig)) return;
+        seen.add(sig);
+        out.push(q);
+      });
+      return out;
+    }
+
+    const bank = dedupeQuestions(rawBank);
+
+    function shuffle(list) {
+      const copy = [...list];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function normalizeAnswer(value) {
+      if (Array.isArray(value)) {
+        return [...value].sort((a, b) => a - b);
+      }
+      return [value];
+    }
+
+    function isCorrect(question, given) {
+      const expected = normalizeAnswer(question.ans);
+      const actual = normalizeAnswer(given || []);
+      if (expected.length !== actual.length) return false;
+      return expected.every((v, i) => v === actual[i]);
+    }
+
+    function getGiven(question) {
+      const raw = answers[idx];
+      if (!raw) return [];
+      if (question.multi) return raw;
+      return [raw[0]];
+    }
+
+    function saveCurrentAnswer() {
+      const question = session[idx];
+      const picks = [...optionsForm.querySelectorAll("input:checked")].map((el) => Number(el.value));
+      if (picks.length === 0) {
+        delete answers[idx];
+      } else {
+        answers[idx] = question.multi ? picks.sort((a, b) => a - b) : [picks[0]];
+      }
+    }
+
+    function renderQuestion() {
+      const question = session[idx];
+      const current = answers[idx] || [];
+      const selectedSet = new Set(current);
+
+      qMeta.textContent = `Question ${idx + 1} of ${session.length} | Domain ${question.domain} | Task ${question.task}${question.multi ? " | Choose two" : ""}`;
+      qText.textContent = question.q;
+      progressBar.style.width = `${((idx + 1) / session.length) * 100}%`;
+
+      optionsForm.innerHTML = "";
+      const type = question.multi ? "checkbox" : "radio";
+      question.opts.forEach((opt, optIndex) => {
+        const id = `opt_${idx}_${optIndex}`;
+        const label = document.createElement("label");
+        label.className = "opt";
+        label.setAttribute("for", id);
+
+        const input = document.createElement("input");
+        input.type = type;
+        input.name = "answer";
+        input.id = id;
+        input.value = String(optIndex);
+        input.checked = selectedSet.has(optIndex);
+
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(opt));
+        optionsForm.appendChild(label);
+      });
+
+      prevBtn.disabled = idx === 0;
+      nextBtn.disabled = idx === session.length - 1;
+      submitBtn.classList.toggle("hidden", idx !== session.length - 1);
+
+      feedback.textContent = "";
+      feedback.className = "feedback";
+
+      if (immediateFeedback && answers[idx]) {
+        const ok = isCorrect(question, getGiven(question));
+        feedback.classList.add(ok ? "ok" : "bad");
+        feedback.textContent = ok ? "Correct." : `Not quite. ${question.explain}`;
+      }
+    }
+
+    function sampleWeightedExam(total) {
+      const byDomain = {
+        1: shuffle(bank.filter((q) => q.domain === 1)),
+        2: shuffle(bank.filter((q) => q.domain === 2)),
+        3: shuffle(bank.filter((q) => q.domain === 3)),
+        4: shuffle(bank.filter((q) => q.domain === 4))
+      };
+      const domains = [1, 2, 3, 4];
+      const quotas = {};
+      const fractions = [];
+      let allocated = 0;
+
+      domains.forEach((d) => {
+        const exact = (total * DOMAIN_WEIGHTS[d]) / 100;
+        const base = Math.floor(exact);
+        quotas[d] = base;
+        allocated += base;
+        fractions.push({ domain: d, frac: exact - base });
+      });
+
+      let remaining = total - allocated;
+      fractions.sort((a, b) => b.frac - a.frac);
+      let pointer = 0;
+      while (remaining > 0) {
+        quotas[fractions[pointer % fractions.length].domain] += 1;
+        pointer += 1;
+        remaining -= 1;
+      }
+
+      domains.forEach((d) => {
+        if (quotas[d] > byDomain[d].length) {
+          quotas[d] = byDomain[d].length;
+        }
+      });
+
+      const currentlyAllocated = domains.reduce((sum, d) => sum + quotas[d], 0);
+      let refill = total - currentlyAllocated;
+      if (refill > 0) {
+        const refillOrder = shuffle(domains);
+        while (refill > 0) {
+          let addedThisPass = false;
+          refillOrder.forEach((d) => {
+            if (refill <= 0) return;
+            if (quotas[d] < byDomain[d].length) {
+              quotas[d] += 1;
+              refill -= 1;
+              addedThisPass = true;
+            }
+          });
+          if (!addedThisPass) break;
+        }
+      }
+
+      const picked = [];
+      domains.forEach((d) => {
+        picked.push(...byDomain[d].slice(0, quotas[d]));
+      });
+      return shuffle(picked).slice(0, total);
+    }
+
+    function startQuiz() {
+      const requested = Number(questionCountInput.value) || 65;
+      const count = Math.max(5, Math.min(requested, 65));
+      const available = bank.length;
+      const finalCount = Math.min(count, available);
+      
+      if (finalCount === 65) {
+        session = sampleWeightedExam(finalCount);
+      } else {
+        session = shuffle(bank).slice(0, finalCount);
+      }
+      answers = {};
+      idx = 0;
+      immediateFeedback = finalCount !== 65;
+
+      setupCard.classList.add("hidden");
+      resultCard.classList.add("hidden");
+      quizCard.classList.remove("hidden");
+
+      renderQuestion();
+    }
+
+    function finishQuiz() {
+      saveCurrentAnswer();
+      let correct = 0;
+      let unanswered = 0;
+
+      session.forEach((q, i) => {
+        if (!answers[i]) {
+          unanswered += 1;
+          return;
+        }
+        const given = q.multi ? answers[i] : [answers[i][0]];
+        if (isCorrect(q, given)) correct += 1;
+      });
+
+      const percent = ((correct / session.length) * 100).toFixed(1);
+      scoreLine.textContent = `Score: ${correct}/${session.length} (${percent}%). Unanswered: ${unanswered}.`;
+
+      const misses = session
+        .map((q, i) => ({ q, i }))
+        .filter(({ q, i }) => !answers[i] || !isCorrect(q, q.multi ? answers[i] : [answers[i][0]]));
+
+      if (misses.length === 0) {
+        review.innerHTML = "Excellent work. Every question was correct.";
+      } else {
+        const lines = misses.slice(0, 12).map(({ q, i }) => {
+          const expected = normalizeAnswer(q.ans).map((n) => q.opts[n]).join("; ");
+          return `<li>Q${i + 1}: ${q.q}<br><strong>Correct answer:</strong> ${expected}<br><strong>Why:</strong> ${q.explain}</li>`;
+        }).join("");
+        review.innerHTML = `<p>Review of missed questions (first 12):</p><ul class="list">${lines}</ul>`;
+      }
+
+      quizCard.classList.add("hidden");
+      resultCard.classList.remove("hidden");
+    }
+
+    startBtn.addEventListener("click", startQuiz);
+    restartBtn.addEventListener("click", () => {
+      resultCard.classList.add("hidden");
+      setupCard.classList.remove("hidden");
+    });
+
+    prevBtn.addEventListener("click", () => {
+      saveCurrentAnswer();
+      idx -= 1;
+      renderQuestion();
+    });
+
+    nextBtn.addEventListener("click", () => {
+      saveCurrentAnswer();
+      idx += 1;
+      renderQuestion();
+    });
+
+    submitBtn.addEventListener("click", finishQuiz);
+
+    bankInfo.textContent = `Question bank loaded: ${bank.length} unique questions across 4 domains. Full 65-question exams use SAA-C03 weighted domain sampling (30/26/24/20).`;
+  </script>
+</body>
+</html>
