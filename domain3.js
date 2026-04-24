@@ -16,7 +16,7 @@
 
   const patterns = [
     {
-      task: "3.1",
+      task: "3.3",
       q: (s) => `${s} has a read-heavy Aurora workload and rising read latency. Which change best improves performance without scaling the writer?`,
       opts: [
         "Add Aurora Replicas and route reads to the reader endpoint",
@@ -28,7 +28,7 @@
       explain: "Aurora Replicas scale read throughput while preserving the primary writer role."
     },
     {
-      task: "3.1",
+      task: "3.4",
       q: (s) => `${s} serves repeated API responses that are cacheable for short periods. Which architecture most reduces latency and backend load?`,
       opts: [
         "CloudFront caching in front of API responses",
@@ -40,19 +40,19 @@
       explain: "Edge caching reduces repeated origin hits and improves response latency for cacheable content."
     },
     {
-      task: "3.1",
+      task: "3.3",
       q: (s) => `${s} uses DynamoDB and needs microsecond reads for frequently accessed keys. Which service is designed for this?`,
       opts: [
         "DynamoDB Accelerator (DAX)",
         "Amazon RDS Proxy",
-        "Amazon Redshift",
-        "Amazon Athena"
+        "DynamoDB global tables",
+        "DynamoDB Streams with Lambda consumers"
       ],
       ans: 0,
       explain: "DAX is an in-memory cache layer for DynamoDB read acceleration."
     },
     {
-      task: "3.1",
+      task: "3.2",
       q: (s) => `${s} has variable CPU traffic on EC2 and wants automated performance scaling. Which policy is best aligned?`,
       opts: [
         "Target tracking Auto Scaling based on utilization",
@@ -64,37 +64,37 @@
       explain: "Target tracking adjusts capacity automatically to maintain selected performance targets."
     },
     {
-      task: "3.2",
+      task: "3.4",
       q: (s) => `${s} has global users and wants lower latency to regional endpoints over the AWS backbone. Which service helps most?`,
       opts: [
         "AWS Global Accelerator",
-        "AWS Config",
-        "AWS DataSync",
-        "Amazon SQS"
+        "Amazon CloudFront with dynamic content disabled",
+        "Route 53 geolocation routing only",
+        "AWS Site-to-Site VPN acceleration"
       ],
       ans: 0,
       explain: "Global Accelerator optimizes traffic pathing to healthy regional endpoints via AWS global network."
     },
     {
-      task: "3.2",
+      task: "3.1",
       q: (s) => `${s} stores files frequently accessed for 30 days and rarely afterward. Which storage approach balances performance and lifecycle efficiency?`,
       opts: [
         "S3 Standard with lifecycle transitions to colder classes",
-        "Deep Archive immediately",
-        "Single EBS volume",
-        "Instance store only"
+        "S3 Glacier Deep Archive for all objects immediately",
+        "EFS Standard with no lifecycle policy",
+        "One gp3 volume attached to an upload processor"
       ],
       ans: 0,
       explain: "Use hot storage for active phase, then transition by policy as access frequency drops."
     },
     {
-      task: "3.2",
+      task: "3.1",
       q: (s) => `${s} runs temporary scratch workloads with high local IOPS needs and no persistence requirement after stop. Which storage is best?`,
       opts: [
         "EC2 instance store",
-        "Amazon EFS",
-        "S3 Glacier",
-        "Amazon FSx for Windows"
+        "Provisioned IOPS EBS volume with snapshots",
+        "Amazon EFS Max I/O mode",
+        "S3 Standard with Transfer Acceleration"
       ],
       ans: 0,
       explain: "Instance store provides high-performance ephemeral local storage."
@@ -124,25 +124,25 @@
       explain: "Spot is built for flexible, interruptible workloads and can lower compute cost significantly."
     },
     {
-      task: "3.3",
+      task: "3.4",
       q: (s) => `${s} needs private in-VPC access to SQS and KMS APIs with no public internet path. Which network design is best?`,
       opts: [
         "Interface VPC endpoints for required services",
-        "Internet gateway and public endpoints",
-        "NAT-only without endpoints",
-        "VPC peering only"
+        "Gateway endpoints for SQS and KMS",
+        "NAT gateways in each AZ with public service endpoints",
+        "VPC peering to an AWS-owned service VPC"
       ],
       ans: 0,
       explain: "Interface endpoints provide private service connectivity over AWS PrivateLink."
     },
     {
-      task: "3.3",
+      task: "3.5",
       q: (s) => `${s} needs serverless ad hoc SQL queries over S3 data with fast startup and minimal ops. Which service is best?`,
       opts: [
         "Amazon Athena",
-        "Self-managed MySQL on EC2",
-        "Amazon MQ",
-        "AWS Transfer Family"
+        "Amazon Redshift provisioned cluster kept online",
+        "AWS Glue crawler alone",
+        "Amazon EMR cluster with long-running masters"
       ],
       ans: 0,
       explain: "Athena provides serverless SQL querying over data in S3."
@@ -154,7 +154,8 @@
         "Choose partition keys that avoid hotspots",
         "Enable DynamoDB auto scaling for provisioned throughput",
         "Force all writes to one partition key",
-        "Disable autoscaling and keep low fixed capacity"
+        "Disable autoscaling and keep low fixed capacity",
+        "Use strongly consistent scans for every request"
       ],
       multi: true,
       ans: [0, 1],
@@ -173,7 +174,7 @@
       explain: "Lambda scales per request and eliminates always-on capacity overhead for bursty short tasks."
     },
     {
-      task: "3.4",
+      task: "3.1",
       q: (s) => `${s} receives uploads from globally distributed clients and wants faster transfers to S3. Which feature helps?`,
       opts: [
         "S3 Transfer Acceleration",
@@ -185,7 +186,7 @@
       explain: "Transfer Acceleration uses edge locations and optimized routing for long-distance uploads."
     },
     {
-      task: "3.4",
+      task: "3.2",
       q: (s) => `${s} has CPU-bound Java services and needs better throughput per dollar. Which approach is most appropriate?`,
       opts: [
         "Benchmark newer EC2 families and right-size using measured load",
@@ -197,7 +198,7 @@
       explain: "Empirical benchmarking and right-sizing are key to practical performance optimization."
     },
     {
-      task: "3.4",
+      task: "3.3",
       q: (s) => `${s} has stateless web nodes but frequent session lookups that add response latency. Which architecture can reduce latency?`,
       opts: [
         "Store session state in Amazon ElastiCache",
@@ -209,31 +210,31 @@
       explain: "In-memory cache services provide low-latency shared session access."
     },
     {
-      task: "3.4",
+      task: "3.3",
       q: (s) => `${s} has many short-lived database connections causing relational DB pressure. Which service can help connection reuse and stability?`,
       opts: [
         "Amazon RDS Proxy",
-        "Amazon S3 replication",
-        "AWS Direct Connect",
-        "Amazon Route 53"
+        "Aurora read replicas only",
+        "DynamoDB Accelerator (DAX)",
+        "Application Load Balancer stickiness"
       ],
       ans: 0,
       explain: "RDS Proxy manages pooled database connections and reduces connection churn overhead."
     },
     {
-      task: "3.4",
+      task: "3.5",
       q: (s) => `${s} needs sustained high-throughput streaming ingestion with partitioned consumers and near-real-time processing. Which service is most suitable?`,
       opts: [
         "Amazon Kinesis Data Streams",
-        "Amazon SES",
-        "Amazon FSx",
-        "AWS Budgets"
+        "Amazon SQS FIFO queue with one message group",
+        "AWS Glue crawler scheduled hourly",
+        "Amazon Athena query federation"
       ],
       ans: 0,
       explain: "Kinesis Data Streams supports partitioned scalable ingest and parallel stream processing."
     },
     {
-      task: "3.4",
+      task: "3.1",
       q: (s) => `${s} needs block storage tuned for consistent baseline SSD performance with separate IOPS/throughput control at lower cost than io classes. Which EBS type is best?`,
       opts: [
         "EBS gp3",
@@ -245,7 +246,7 @@
       explain: "gp3 allows independent tuning of IOPS/throughput and is commonly strong price-performance for general SSD use."
     },
     {
-      task: "3.4",
+      task: "3.5",
       q: (s) => `${s} needs event-driven image processing with horizontal scale and minimal server operations. Which design is most aligned?`,
       opts: [
         "S3 event notifications triggering Lambda",
@@ -257,7 +258,7 @@
       explain: "S3-to-Lambda event patterns provide scalable serverless processing with low operational overhead."
     },
     {
-      task: "3.4",
+      task: "3.3",
       q: (s) => `${s} has API hot keys and frequent read amplification from repeated requests. Which additional technique improves performance beyond base table tuning?`,
       opts: [
         "Read-through caching layer such as DAX or ElastiCache",
@@ -269,7 +270,7 @@
       explain: "Caching frequently requested values reduces repeated backend reads and lowers response latency."
     },
     {
-      task: "3.4",
+      task: "3.2",
       q: (s) => `${s} wants performance-aware architecture decisions for new workloads. Which discipline best prevents premature overprovisioning?`,
       opts: [
         "Load testing and metric-based right-sizing before broad rollout",

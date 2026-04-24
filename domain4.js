@@ -20,9 +20,9 @@
       q: (s) => `${s} runs a stable 24/7 EC2 baseline for at least one year. Which option is generally most cost efficient?`,
       opts: [
         "Savings Plans or Reserved Instances for baseline usage",
-        "On-Demand only",
-        "Dedicated Hosts for everything",
-        "Spot only"
+        "On-Demand Instances with no commitment",
+        "Capacity Reservations without a discount commitment",
+        "Spot Instances for the entire steady baseline"
       ],
       ans: 0,
       explain: "Commitment discounts are typically best for predictable steady-state compute usage."
@@ -44,9 +44,9 @@
       q: (s) => `${s} retains logs in S3 and rarely reads data older than 90 days. Which policy best optimizes storage cost?`,
       opts: [
         "S3 lifecycle transitions to lower-cost classes",
-        "Keep all data in S3 Standard forever",
-        "Move logs to gp3 volumes",
-        "Delete all logs after 7 days"
+        "Keep all log data in S3 Standard indefinitely",
+        "Move logs to EBS snapshots after 90 days",
+        "Use Cross-Region Replication without lifecycle rules"
       ],
       ans: 0,
       explain: "Lifecycle transitions align storage class cost with changing access patterns."
@@ -56,9 +56,9 @@
       q: (s) => `${s} accesses S3 from private subnets through NAT gateways and has high processing charges. Which change likely reduces cost?`,
       opts: [
         "Use an S3 gateway endpoint",
-        "Add more NAT gateways",
-        "Route through internet gateway",
-        "Use one public subnet"
+        "Add NAT gateways in every Availability Zone",
+        "Use an S3 interface endpoint for all same-Region S3 traffic",
+        "Move processing instances into public subnets"
       ],
       ans: 0,
       explain: "S3 gateway endpoints can avoid NAT processing for S3 traffic."
@@ -92,9 +92,9 @@
       q: (s) => `${s} wants alerts for unusual spend spikes and rightsizing recommendations. Which services should be used together?`,
       opts: [
         "AWS Cost Anomaly Detection and AWS Compute Optimizer",
-        "Route 53 and CloudTrail",
-        "Macie and GuardDuty",
-        "Athena and Glue only"
+        "AWS Budgets and Amazon GuardDuty",
+        "AWS Cost Explorer and AWS Shield Advanced",
+        "AWS Config and AWS IAM Access Analyzer"
       ],
       ans: 0,
       explain: "Cost Anomaly Detection and Compute Optimizer target spend monitoring and optimization insights."
@@ -116,9 +116,9 @@
       q: (s) => `${s} serves static assets globally from S3 and wants to reduce origin transfer load. Which architecture helps most?`,
       opts: [
         "CloudFront with S3 origin caching",
-        "Single EC2 origin only",
-        "Static traffic through NAT",
-        "EBS snapshot distribution"
+        "Regional S3 website endpoint only",
+        "Application Load Balancer in front of the S3 bucket",
+        "Static traffic through NAT gateways"
       ],
       ans: 0,
       explain: "CloudFront caching reduces repeated origin fetches and improves transfer efficiency."
@@ -154,7 +154,8 @@
         "Use VPC endpoints for AWS services where appropriate",
         "Route all service traffic through centralized NAT",
         "Minimize unnecessary cross-AZ traffic",
-        "Duplicate traffic for analytics"
+        "Duplicate traffic for analytics",
+        "Send same-Region service calls through public internet paths"
       ],
       multi: true,
       ans: [0, 2],
@@ -177,9 +178,9 @@
       q: (s) => `${s} needs infrequent backup access with millisecond retrieval. Which S3 class is typically appropriate?`,
       opts: [
         "S3 Standard-IA",
-        "S3 Deep Archive",
-        "S3 Glacier Flexible Retrieval only",
-        "EBS io2"
+        "S3 Glacier Deep Archive",
+        "S3 Glacier Flexible Retrieval",
+        "EBS io2 with scheduled snapshots"
       ],
       ans: 0,
       explain: "Standard-IA is designed for infrequent access with rapid retrieval characteristics."
@@ -201,9 +202,9 @@
       q: (s) => `${s} has variable database demand and currently overpays for fixed provisioned capacity. Which model can better align cost with usage?`,
       opts: [
         "Serverless or autoscaling database capacity options",
-        "Larger fixed provisioned instances",
-        "Single magnetic disk",
-        "Disable backups"
+        "Larger fixed provisioned database instances",
+        "Read replicas sized for peak write traffic",
+        "Longer backup retention as the only change"
       ],
       ans: 0,
       explain: "Usage-adaptive capacity models reduce idle overprovisioning for variable workloads."

@@ -501,16 +501,10 @@ const EXAM_WEIGHTS = { 1: 0.30, 2: 0.26, 3: 0.24, 4: 0.20 };
 const OFFICIAL_EXAM_HISTORY_KEY = 'awsQuizRecentOfficial65';
 const OFFICIAL_EXAM_HISTORY_LIMIT = 3;
 const OFFICIAL_EXAM_EXCLUDED_TERMS = [
-  /\baws wavelength\b/i,
-  /\bwavelength zones?\b/i,
   /\baws cloudshell\b/i,
   /\baws codedeploy\b/i,
   /\biot greengrass\b/i,
   /\baws iot greengrass\b/i,
-  /\baws network firewall\b/i,
-  /\bamazon fsx for lustre\b/i,
-  /\bfsx for lustre\b/i,
-  /\baws transfer family\b/i,
   /\baws elemental mediaconvert\b/i
 ];
 
@@ -535,6 +529,27 @@ function shuffle(arr) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+function cloneQuestionWithShuffledOptions(q, doShuffle) {
+  if (!doShuffle || !q || !Array.isArray(q.opts)) return q;
+
+  const correct = new Set(q.multi ? q.ans : [q.ans]);
+  const entries = q.opts.map((text, originalIndex) => ({
+    text,
+    correct: correct.has(originalIndex)
+  }));
+  shuffle(entries);
+
+  const nextAns = entries
+    .map((entry, index) => entry.correct ? index : null)
+    .filter((index) => index !== null);
+
+  return {
+    ...q,
+    opts: entries.map((entry) => entry.text),
+    ans: q.multi ? nextAns : nextAns[0]
+  };
 }
 
 function officialExamEligible(q) {
@@ -1023,6 +1038,8 @@ function startQuiz() {
     });
     scoredQuestionIndices = new Set(Array.from({ length: quiz.length }, (_, i) => i));
   }
+
+  quiz = quiz.map((q) => cloneQuestionWithShuffledOptions(q, doShuffle));
 
   lastQuizSet = quiz.map((q, i) => ({
     index: i + 1,

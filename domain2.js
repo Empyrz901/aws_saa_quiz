@@ -20,9 +20,9 @@
       q: (s) => `${s} must keep a web tier online during an Availability Zone outage. Which architecture best meets this goal?`,
       opts: [
         "Multi-AZ Auto Scaling behind an Application Load Balancer",
-        "Single EC2 instance with EIP",
-        "One ECS task in one subnet",
-        "Single NAT instance"
+        "Two EC2 instances in one subnet behind an Application Load Balancer",
+        "A larger single EC2 instance with an Elastic IP address",
+        "Auto Scaling in one Availability Zone with frequent AMI backups"
       ],
       ans: 0,
       explain: "Multi-AZ load balancing and autoscaling protect against single-AZ failures."
@@ -56,9 +56,9 @@
       q: (s) => `${s} needs to decouple producers from consumers and absorb burst traffic during downstream slowdowns. Which service is best?`,
       opts: [
         "Amazon SQS",
-        "Amazon EBS",
-        "Amazon Route 53",
-        "AWS Config"
+        "Amazon SNS direct fanout to synchronous consumers",
+        "Amazon EventBridge without a retry or DLQ policy",
+        "Application Load Balancer target groups"
       ],
       ans: 0,
       explain: "SQS provides durable buffering and asynchronous decoupling."
@@ -92,9 +92,9 @@
       q: (s) => `${s} needs multi-Region active reads/writes with low RPO for a DynamoDB workload. Which design is best?`,
       opts: [
         "DynamoDB global tables",
-        "Single-region table with daily exports",
-        "DAX only",
-        "Cross-account IAM role"
+        "Single-Region table with cross-Region backup copies",
+        "DAX cluster in each Region without table replication",
+        "DynamoDB Streams consumed by one manually operated replicator"
       ],
       ans: 0,
       explain: "Global tables provide managed multi-Region replication and active access patterns."
@@ -128,40 +128,41 @@
       q: (s) => `${s} chooses warm standby for disaster recovery. Which description matches that pattern?`,
       opts: [
         "Scaled-down but running stack in the secondary region",
-        "No infrastructure until disaster",
-        "Full-size active-active only",
-        "Backups on tape with manual rebuild"
+        "Backups replicated to another Region with no running compute",
+        "Full-size active-active deployment in both Regions",
+        "Pilot-light core services with the application tier stopped"
       ],
       ans: 0,
       explain: "Warm standby keeps reduced-capacity resources running and ready to scale during failover."
     },
     {
-      task: "2.3",
+      task: "2.1",
       q: (s) => `${s} uses EventBridge to route events to many targets and wants resilient delivery. Which statement is accurate?`,
       opts: [
         "EventBridge supports retries and can send failed deliveries to a DLQ",
-        "EventBridge guarantees global ordering across all targets",
-        "EventBridge requires synchronous response from each target",
-        "EventBridge stores relational query indexes"
+        "EventBridge preserves strict ordering across all matched rules",
+        "EventBridge requires each target to commit before the next target is invoked",
+        "EventBridge automatically replays all failed target deliveries forever"
       ],
       ans: 0,
       explain: "EventBridge has retry policies and DLQ integration to handle failed target delivery attempts."
     },
     {
-      task: "2.3",
+      task: "2.2",
       q: (s) => `Which two actions improve Aurora resiliency for ${s}?`,
       opts: [
         "Use Aurora Replicas across Availability Zones",
         "Disable backups to reduce overhead",
         "Enable automated backups and point-in-time recovery",
-        "Use one instance in one AZ only"
+        "Use one instance in one AZ only",
+        "Store database snapshots only on an application server"
       ],
       multi: true,
       ans: [0, 2],
       explain: "Aurora replicas plus automated backup/PITR improve availability and recoverability."
     },
     {
-      task: "2.3",
+      task: "2.1",
       q: (s) => `${s} has temporary consumer outages and must avoid losing queued messages. Which SQS parameter is most relevant?`,
       opts: [
         "Message retention period",
@@ -173,7 +174,7 @@
       explain: "Retention defines how long unprocessed messages remain available before expiration."
     },
     {
-      task: "2.3",
+      task: "2.2",
       q: (s) => `${s} uses EC2 Auto Scaling and wants failed instances automatically replaced to keep desired capacity. Which mechanism enables this?`,
       opts: [
         "Auto Scaling health checks with replacement",
@@ -185,19 +186,19 @@
       explain: "Auto Scaling integrates health status and replaces unhealthy instances automatically."
     },
     {
-      task: "2.4",
+      task: "2.2",
       q: (s) => `${s} needs resilient dedicated hybrid connectivity with minimal single-point-of-failure risk. What is recommended?`,
       opts: [
         "Redundant Direct Connect connections with resilient routing",
-        "Single VPN tunnel only",
-        "Single DX link in one location",
-        "Internet gateway with static routes"
+        "One Direct Connect connection with a Site-to-Site VPN configured but not advertised",
+        "Two virtual interfaces on the same Direct Connect connection",
+        "A single VPN connection with static routes only"
       ],
       ans: 0,
       explain: "Redundant Direct Connect design improves connectivity availability and failover posture."
     },
     {
-      task: "2.4",
+      task: "2.1",
       q: (s) => `${s} has microservices that should continue partial operation if one dependency fails. Which architecture principle fits?`,
       opts: [
         "Failure isolation and bulkhead-style boundaries",
@@ -209,7 +210,7 @@
       explain: "Bulkhead/failure-isolation approaches reduce blast radius and preserve partial availability."
     },
     {
-      task: "2.4",
+      task: "2.1",
       q: (s) => `${s} wants to run stateless container tasks across AZs and survive instance failures automatically. Which orchestration setup is strongest?`,
       opts: [
         "ECS service across multiple AZ subnets with desired task count",
@@ -221,7 +222,7 @@
       explain: "ECS services maintain desired task count and can place tasks across AZs for resilience."
     },
     {
-      task: "2.4",
+      task: "2.2",
       q: (s) => `${s} needs regional disaster recovery for object data with asynchronous replication to another region. Which S3 feature should be used?`,
       opts: [
         "S3 Cross-Region Replication",
@@ -233,7 +234,7 @@
       explain: "CRR replicates objects to another region for resilience and DR use cases."
     },
     {
-      task: "2.4",
+      task: "2.1",
       q: (s) => `${s} needs resilient API integration between microservices with event replay capability. Which combination is most aligned?`,
       opts: [
         "EventBridge or SQS with DLQ and idempotent consumers",
@@ -245,7 +246,7 @@
       explain: "Asynchronous messaging with DLQ and idempotent processing supports resilient recovery patterns."
     },
     {
-      task: "2.4",
+      task: "2.2",
       q: (s) => `${s} needs to reduce RTO for relational database recovery from failures. Which managed capability directly supports fast point-in-time restoration?`,
       opts: [
         "Automated backups with point-in-time restore",
@@ -257,19 +258,19 @@
       explain: "Automated backups and PITR are core mechanisms for restoring relational databases quickly."
     },
     {
-      task: "2.4",
+      task: "2.1",
       q: (s) => `${s} uses SQS standard queues and wants consumers to avoid processing the same message simultaneously. Which feature helps?`,
       opts: [
         "Visibility timeout",
-        "Transfer acceleration",
-        "Route table propagation",
-        "CloudWatch dashboard"
+        "Message retention period only",
+        "Long polling wait time only",
+        "Content-based deduplication on a standard queue"
       ],
       ans: 0,
       explain: "Visibility timeout hides in-flight messages from other consumers during processing."
     },
     {
-      task: "2.4",
+      task: "2.2",
       q: (s) => `${s} needs data-store-level regional resilience for global users with read locality. Which Aurora architecture is typically selected?`,
       opts: [
         "Aurora Global Database",
