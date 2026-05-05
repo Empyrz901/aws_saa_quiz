@@ -1423,13 +1423,7 @@ function selectOption(idx) {
     el.classList.toggle('picked', multiSelections.includes(i));
   });
 
-  // Show/hide submit button when enough selected
-  const submitBtn = document.getElementById('btn-submit');
-  if (multiSelections.length === requiredCount) {
-    submitBtn.classList.remove('hidden');
-  } else {
-    submitBtn.classList.add('hidden');
-  }
+  document.getElementById('btn-submit').classList.add('hidden');
 }
 
 function submitAnswer() {
@@ -1538,6 +1532,11 @@ function prevQuestion() {
 }
 
 function nextQuestion() {
+  if (!officialSimulation && !answered && quiz[current] && quiz[current].multi) {
+    if (multiSelections.length === quiz[current].ans.length) submitMulti();
+    return;
+  }
+
   if (current < quiz.length - 1) { current++; renderQuestion(); }
   else showResults();
 }
