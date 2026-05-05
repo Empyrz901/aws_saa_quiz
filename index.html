@@ -1109,7 +1109,6 @@ function runAgentStep() {
       submitAnswer();
     } else {
       selectOption(picks[0]);
-      submitAnswer();
     }
   }
 
@@ -1299,7 +1298,9 @@ function renderQuestion() {
   const isMulti = q.multi;
   const requiredCount = isMulti ? q.ans.length : 1;
   let hintHtml = '';
-  hintHtml = `<div class="multi-hint">Select ${requiredCount} answer${requiredCount > 1 ? 's' : ''}</div>`;
+  if (isMulti) {
+    hintHtml = `<div class="multi-hint">Select ${requiredCount} answers</div>`;
+  }
 
   const letters = 'ABCDE';
   const optsHtml = q.opts.map((opt, i) =>
@@ -1398,17 +1399,10 @@ function selectOption(idx) {
     return;
   }
 
-  // Single-answer practice mode: select first, submit explicitly.
+  // Single-answer practice mode: immediate feedback keeps one-answer questions quick.
   if (!q.multi) {
     multiSelections = [idx];
-
-    const optEls = document.querySelectorAll('.option');
-    optEls.forEach(el => {
-      const i = parseInt(el.dataset.idx);
-      el.classList.toggle('picked', i === idx);
-    });
-
-    document.getElementById('btn-submit').classList.remove('hidden');
+    submitSingle();
     return;
   }
 
