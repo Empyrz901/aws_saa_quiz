@@ -211,7 +211,7 @@
       <button class="btn-flag hidden" id="btn-flag" onclick="toggleFlag()" title="Report an error in this question via GitHub"><span class="flag-icon"></span> Report error</button>
       <button class="btn btn-outline hidden" id="btn-clear" onclick="clearCurrentResponse()">Clear</button>
       <button class="btn btn-outline hidden" id="btn-prev" onclick="prevQuestion()">Prev</button>
-      <button class="btn hidden" id="btn-submit" onclick="submitMulti()">Submit</button>
+      <button class="btn hidden" id="btn-submit" onclick="submitAnswer()">Submit</button>
       <button class="btn hidden" id="btn-next" onclick="nextQuestion()">Next</button>
     </div>
     <div class="exam-panel hidden" id="exam-panel">
@@ -1106,9 +1106,10 @@ function runAgentStep() {
     const picks = chooseAgentPicks(q);
     if (q.multi) {
       picks.forEach((p) => selectOption(p));
-      submitMulti();
+      submitAnswer();
     } else {
       selectOption(picks[0]);
+      submitAnswer();
     }
   }
 
@@ -1298,9 +1299,7 @@ function renderQuestion() {
   const isMulti = q.multi;
   const requiredCount = isMulti ? q.ans.length : 1;
   let hintHtml = '';
-  if (isMulti) {
-    hintHtml = `<div class="multi-hint">Select ${requiredCount} answer${requiredCount > 1 ? 's' : ''}</div>`;
-  }
+  hintHtml = `<div class="multi-hint">Select ${requiredCount} answer${requiredCount > 1 ? 's' : ''}</div>`;
 
   const letters = 'ABCDE';
   const optsHtml = q.opts.map((opt, i) =>
@@ -1399,35 +1398,17 @@ function selectOption(idx) {
     return;
   }
 
-  // Single-answer: evaluate immediately
+  // Single-answer practice mode: select first, submit explicitly.
   if (!q.multi) {
-    answered = true;
-    const correctIndices = [q.ans];
-    const isCorrect = correctIndices.includes(idx);
+    multiSelections = [idx];
 
     const optEls = document.querySelectorAll('.option');
     optEls.forEach(el => {
-      el.classList.add('disabled');
       const i = parseInt(el.dataset.idx);
-      if (i === idx) el.classList.add('picked');
+      el.classList.toggle('picked', i === idx);
     });
-    const counted = scoredQuestionIndices.has(current);
-    if (!isCorrect) {
-      if (shouldRevealAnswersDuringQuiz()) optEls[idx].classList.add('wrong');
-      if (counted) wrong++;
-    } else {
-      if (counted) score++;
-    }
 
-    if (shouldRevealAnswersDuringQuiz()) {
-      optEls.forEach(el => {
-        const i = parseInt(el.dataset.idx);
-        if (correctIndices.includes(i)) el.classList.add('correct');
-      });
-    }
-
-    results[current] = { q: q.q, correct: isCorrect, yourAnswer: q.opts[idx], rightAnswer: correctIndices.map(i => q.opts[i]).join(', '), explain: q.explain, _picks: [idx], _counted: counted };
-    showPostAnswer();
+    document.getElementById('btn-submit').classList.remove('hidden');
     return;
   }
 
@@ -1455,6 +1436,46 @@ function selectOption(idx) {
   } else {
     submitBtn.classList.add('hidden');
   }
+}
+
+function submitAnswer() {
+  const q = quiz[current];
+  if (q && q.multi) submitMulti();
+  else submitSingle();
+}
+
+function submitSingle() {
+  if (answered || multiSelections.length !== 1) return;
+  answered = true;
+  const q = quiz[current];
+  const idx = multiSelections[0];
+  const correctIndices = [q.ans];
+  const isCorrect = correctIndices.includes(idx);
+
+  const optEls = document.querySelectorAll('.option');
+  optEls.forEach(el => {
+    el.classList.add('disabled');
+    const i = parseInt(el.dataset.idx);
+    if (i === idx) el.classList.add('picked');
+  });
+
+  const counted = scoredQuestionIndices.has(current);
+  if (!isCorrect) {
+    if (shouldRevealAnswersDuringQuiz()) optEls[idx].classList.add('wrong');
+    if (counted) wrong++;
+  } else {
+    if (counted) score++;
+  }
+
+  if (shouldRevealAnswersDuringQuiz()) {
+    optEls.forEach(el => {
+      const i = parseInt(el.dataset.idx);
+      if (correctIndices.includes(i)) el.classList.add('correct');
+    });
+  }
+
+  results[current] = { q: q.q, correct: isCorrect, yourAnswer: q.opts[idx], rightAnswer: correctIndices.map(i => q.opts[i]).join(', '), explain: q.explain, _picks: [idx], _counted: counted };
+  showPostAnswer();
 }
 
 function submitMulti() {
