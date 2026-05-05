@@ -831,6 +831,8 @@ function pickDiverse(pool, count, doShuffle = true, options = {}) {
   const targetStyleCounts = options.targetStyleCounts || null;
   const targetMultiCount = options.targetMultiCount ?? null;
   const conceptCap = options.conceptCap ?? (count >= 50 ? 2 : 1);
+  const minimumScore = options.minimumScore ?? -6;
+  const fillToCount = options.fillToCount === true;
   const recentPenaltyMaps = options.recentPenaltyMaps || null;
 
   while (picks.length < count && ordered.length) {
@@ -886,7 +888,7 @@ function pickDiverse(pool, count, doShuffle = true, options = {}) {
     }).sort((a, b) => b.score - a.score);
 
     const selected = pickCandidateWithVariance(scoredCandidates);
-    if (!selected || selected.score < -6) break;
+    if (!selected || (!fillToCount && selected.score < minimumScore)) break;
 
     ordered.splice(selected.idx, 1);
     picks.push(selected.q);
@@ -920,7 +922,8 @@ function buildOfficialSimulationQuiz(pool, doShuffle = true) {
     const drawn = pickDiverse(domainPool, scoredTargets[domain], doShuffle, {
       targetStyleCounts: domainStyleTargets,
       targetMultiCount: Math.round(scoredBlueprint.multiTarget * EXAM_WEIGHTS[domain]),
-      conceptCap: 1,
+      conceptCap: Math.max(2, Math.ceil(scoredTargets[domain] / Math.max(1, new Set(domainPool.map((q) => conceptFamilyKey(q))).size))),
+      fillToCount: true,
       initialConceptCounts: scoredConceptCounts,
       usedClusters: scoredClusters,
       recentPenaltyMaps
@@ -942,7 +945,8 @@ function buildOfficialSimulationQuiz(pool, doShuffle = true) {
       {
         targetStyleCounts: scoredBlueprint.styleCounts,
         targetMultiCount: scoredBlueprint.multiTarget,
-        conceptCap: 1,
+        conceptCap: Math.max(2, Math.ceil(50 / 14)),
+        fillToCount: true,
         initialConceptCounts: scoredConceptCounts,
         usedClusters: scoredClusters,
         recentPenaltyMaps
@@ -967,7 +971,8 @@ function buildOfficialSimulationQuiz(pool, doShuffle = true) {
     const drawn = pickDiverse(domainPool, unscoredTargets[domain], doShuffle, {
       targetStyleCounts: domainStyleTargets,
       targetMultiCount: Math.max(0, Math.round(unscoredBlueprint.multiTarget * (unscoredTargets[domain] / 15))),
-      conceptCap: 1,
+      conceptCap: Math.max(2, Math.ceil((scoredTargets[domain] + unscoredTargets[domain]) / Math.max(1, new Set(domainPool.map((q) => conceptFamilyKey(q))).size))),
+      fillToCount: true,
       initialConceptCounts: scoredConceptCounts,
       usedClusters: scoredClusters,
       recentPenaltyMaps
@@ -989,7 +994,8 @@ function buildOfficialSimulationQuiz(pool, doShuffle = true) {
       {
         targetStyleCounts: unscoredBlueprint.styleCounts,
         targetMultiCount: unscoredBlueprint.multiTarget,
-        conceptCap: 1,
+        conceptCap: Math.max(2, Math.ceil(65 / 14)),
+        fillToCount: true,
         initialConceptCounts: scoredConceptCounts,
         usedClusters: scoredClusters,
         recentPenaltyMaps
