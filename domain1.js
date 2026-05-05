@@ -16,7 +16,7 @@
 
   const patterns = [
     {
-      task: "1.1",
+      task: "1.2",
       q: (s) => `${s} hosts a web application in a VPC. The database must never be directly reachable from the internet. Which design is best?`,
       opts: [
         "Place the DB in private subnets and allow inbound only from the app tier security group",
@@ -28,7 +28,7 @@
       explain: "Private subnets and source-restricted security groups prevent direct internet access to the database."
     },
     {
-      task: "1.1",
+      task: "1.2",
       q: (s) => `${s} requires private connectivity from EC2 to S3 without using NAT gateways or internet routing. Which service should be used?`,
       opts: [
         "S3 gateway VPC endpoint",
@@ -40,7 +40,7 @@
       explain: "An S3 gateway endpoint enables private VPC-to-S3 routing without IGW or NAT for that traffic."
     },
     {
-      task: "1.2",
+      task: "1.1",
       q: (s) => `${s} needs temporary credentials for EC2 instances to write to a specific S3 bucket. Which approach is most secure?`,
       opts: [
         "Attach an IAM role to the instance profile with least-privilege bucket permissions",
@@ -52,7 +52,7 @@
       explain: "EC2 instance profiles provide short-lived credentials and avoid embedded long-term keys."
     },
     {
-      task: "1.2",
+      task: "1.1",
       q: (s) => `${s} wants users from an external identity provider to access AWS accounts centrally. Which architecture is most appropriate?`,
       opts: [
         "Federation through IAM Identity Center",
@@ -64,7 +64,7 @@
       explain: "IAM Identity Center supports federated access and centralized permission management across accounts."
     },
     {
-      task: "1.2",
+      task: "1.1",
       q: (s) => `${s} needs cross-account access from a CI account into a production account with no static keys. What should be used?`,
       opts: [
         "AssumeRole with AWS STS",
@@ -76,7 +76,7 @@
       explain: "STS AssumeRole provides temporary, auditable credentials for cross-account access."
     },
     {
-      task: "1.3",
+      task: "1.1",
       q: (s) => `${s} must prevent member accounts in AWS Organizations from disabling CloudTrail. Which control should be applied?`,
       opts: [
         "Service control policies (SCPs)",
@@ -92,9 +92,9 @@
       q: (s) => `${s} wants continuous compliance checks for controls such as encrypted EBS volumes and approved instance types. Which service should be used?`,
       opts: [
         "AWS Config",
-        "Amazon Inspector",
-        "Amazon Athena",
-        "AWS Backup"
+        "AWS Security Hub standards only",
+        "CloudTrail Lake queries on API events",
+        "AWS Control Tower account factory"
       ],
       ans: 0,
       explain: "AWS Config tracks resource configuration and evaluates against rules for ongoing compliance."
@@ -128,9 +128,9 @@
       q: (s) => `${s} must store database passwords securely and rotate them automatically. Which service is most appropriate?`,
       opts: [
         "AWS Secrets Manager",
-        "Amazon S3 metadata",
-        "EC2 user data",
-        "CloudWatch dashboard"
+        "Systems Manager Parameter Store SecureString without rotation",
+        "Encrypted environment variables on each instance",
+        "KMS key alias with passwords stored in application config"
       ],
       ans: 0,
       explain: "Secrets Manager is designed for secure secret storage, retrieval, and rotation workflows."
@@ -164,9 +164,9 @@
       q: (s) => `${s} wants centralized visibility and prioritization of security findings from multiple services. Which service helps aggregate this?`,
       opts: [
         "AWS Security Hub",
-        "Amazon EFS",
-        "AWS AppSync",
-        "AWS Ground Station"
+        "Amazon Detective",
+        "Amazon GuardDuty delegated administrator",
+        "AWS Config aggregator"
       ],
       ans: 0,
       explain: "Security Hub aggregates and normalizes findings from integrated security services."
@@ -214,9 +214,9 @@
       q: (s) => `${s} requires all public endpoints to use managed TLS certificates with automatic renewal. Which AWS service should provide certificates?`,
       opts: [
         "AWS Certificate Manager (ACM)",
-        "AWS IAM Access Analyzer",
-        "Amazon Inspector",
-        "AWS Budgets"
+        "IAM server certificates uploaded manually",
+        "AWS Secrets Manager certificate material rotation",
+        "AWS Private CA without ACM integration"
       ],
       ans: 0,
       explain: "ACM provides managed certificate issuance and renewal for integrated AWS services."
@@ -246,7 +246,7 @@
       explain: "KMS key policy conditions can restrict key usage context, including source endpoint constraints."
     },
     {
-      task: "1.1",
+      task: "1.3",
       q: (s) => `${s} must retain immutable API audit records for investigations and compliance. Which service is foundational for this requirement?`,
       opts: [
         "AWS CloudTrail",
@@ -262,9 +262,9 @@
       q: (s) => `${s} requires network-level filtering and inspection for centralized egress controls between private subnets and external destinations. Which service is best aligned?`,
       opts: [
         "AWS Network Firewall",
-        "Amazon SQS",
-        "Amazon Athena",
-        "AWS Global Accelerator"
+        "Network ACL deny rules in every subnet",
+        "Security group egress rules on each workload",
+        "AWS WAF rules on public load balancers"
       ],
       ans: 0,
       explain: "AWS Network Firewall provides managed network traffic filtering and inspection capabilities."
@@ -274,9 +274,9 @@
       q: (s) => `${s} wants to detect unintended internet exposure paths by continuously analyzing resource access configurations. Which service helps with this objective?`,
       opts: [
         "IAM Access Analyzer",
-        "Amazon ElastiCache",
-        "AWS Glue Data Catalog",
-        "Amazon WorkSpaces"
+        "AWS Config aggregator",
+        "Amazon GuardDuty S3 Protection",
+        "AWS Security Hub control findings"
       ],
       ans: 0,
       explain: "IAM Access Analyzer helps identify external access and public/cross-account exposure risks."

@@ -16,7 +16,7 @@
 
   const patterns = [
     {
-      task: "4.1",
+      task: "4.2",
       q: (s) => `${s} runs a stable 24/7 EC2 baseline for at least one year. Which option is generally most cost efficient?`,
       opts: [
         "Savings Plans or Reserved Instances for baseline usage",
@@ -28,7 +28,7 @@
       explain: "Commitment discounts are typically best for predictable steady-state compute usage."
     },
     {
-      task: "4.1",
+      task: "4.2",
       q: (s) => `${s} has interruptible batch jobs and wants lower compute spend. Which purchasing model is most suitable?`,
       opts: [
         "Spot Instances",
@@ -52,7 +52,7 @@
       explain: "Lifecycle transitions align storage class cost with changing access patterns."
     },
     {
-      task: "4.1",
+      task: "4.4",
       q: (s) => `${s} accesses S3 from private subnets through NAT gateways and has high processing charges. Which change likely reduces cost?`,
       opts: [
         "Use an S3 gateway endpoint",
@@ -112,7 +112,7 @@
       explain: "Athena is serverless and charges primarily per query scanned data."
     },
     {
-      task: "4.2",
+      task: "4.4",
       q: (s) => `${s} serves static assets globally from S3 and wants to reduce origin transfer load. Which architecture helps most?`,
       opts: [
         "CloudFront with S3 origin caching",
@@ -136,7 +136,7 @@
       explain: "Budgets plus cost tags support accountable team-level spend visibility and alerting."
     },
     {
-      task: "4.3",
+      task: "4.2",
       q: (s) => `${s} has non-production environments needed only during business hours. Which action directly lowers cost?`,
       opts: [
         "Automated stop/start schedules for non-prod resources",
@@ -148,7 +148,7 @@
       explain: "Scheduling reduces runtime for resources not needed 24/7."
     },
     {
-      task: "4.3",
+      task: "4.4",
       q: (s) => `Which two networking changes can reduce data transfer and processing costs for ${s}?`,
       opts: [
         "Use VPC endpoints for AWS services where appropriate",
@@ -162,7 +162,7 @@
       explain: "Service endpoints and traffic-path optimization can lower NAT and transfer charges."
     },
     {
-      task: "4.3",
+      task: "4.2",
       q: (s) => `${s} has stable baseline demand with periodic spikes. Which procurement mix is usually cost-optimized?`,
       opts: [
         "Cover baseline with Savings Plans and use On-Demand/Spot for spikes",
@@ -174,8 +174,8 @@
       explain: "Blended procurement aligns commitment discounts with flexible burst capacity."
     },
     {
-      task: "4.3",
-      q: (s) => `${s} needs infrequent backup access with millisecond retrieval. Which S3 class is typically appropriate?`,
+      task: "4.1",
+      q: (s) => `${s} keeps its only copy of monthly backup objects larger than 128 KB and needs millisecond restore access. Which S3 class is typically appropriate?`,
       opts: [
         "S3 Standard-IA",
         "S3 Glacier Deep Archive",
@@ -186,7 +186,7 @@
       explain: "Standard-IA is designed for infrequent access with rapid retrieval characteristics."
     },
     {
-      task: "4.3",
+      task: "4.2",
       q: (s) => `${s} often leaves idle resources running after projects finish. Which governance practice most directly prevents this waste?`,
       opts: [
         "Tagging policies with automated cleanup workflows",
@@ -198,7 +198,7 @@
       explain: "Tag governance plus cleanup automation helps detect and remove orphaned spend."
     },
     {
-      task: "4.4",
+      task: "4.3",
       q: (s) => `${s} has variable database demand and currently overpays for fixed provisioned capacity. Which model can better align cost with usage?`,
       opts: [
         "Serverless or autoscaling database capacity options",
@@ -210,7 +210,7 @@
       explain: "Usage-adaptive capacity models reduce idle overprovisioning for variable workloads."
     },
     {
-      task: "4.4",
+      task: "4.2",
       q: (s) => `${s} runs container tasks continuously at predictable baseline levels. Which pricing commitment generally lowers cost versus pure On-Demand?`,
       opts: [
         "Compute Savings Plans",
@@ -222,7 +222,7 @@
       explain: "Compute Savings Plans can apply discounted rates to eligible steady compute usage."
     },
     {
-      task: "4.4",
+      task: "4.2",
       q: (s) => `${s} wants to cut EC2 spend while keeping performance. Which method should be prioritized first?`,
       opts: [
         "Rightsize using utilization metrics and recommendations",
@@ -234,7 +234,7 @@
       explain: "Rightsizing based on measured utilization addresses overprovisioned compute directly."
     },
     {
-      task: "4.4",
+      task: "4.1",
       q: (s) => `${s} stores EBS snapshots indefinitely with no lifecycle plan. Which action typically reduces long-term storage cost?`,
       opts: [
         "Implement snapshot retention/lifecycle policies",
@@ -246,7 +246,7 @@
       explain: "Lifecycle retention policy prevents unbounded growth of old backup artifacts."
     },
     {
-      task: "4.4",
+      task: "4.2",
       q: (s) => `${s} has spiky nightly ETL workloads in EMR. Which strategy usually lowers cost while keeping throughput targets?`,
       opts: [
         "Use spot-heavy task/core nodes with interruption-aware design",
@@ -258,7 +258,7 @@
       explain: "EMR with spot-aware architecture is a common cost optimization for fault-tolerant ETL windows."
     },
     {
-      task: "4.4",
+      task: "4.2",
       q: (s) => `${s} serves API traffic with mostly idle off-peak periods. Which architecture often improves cost efficiency compared to always-on servers?`,
       opts: [
         "Serverless API pattern with Lambda and API Gateway",
@@ -270,7 +270,7 @@
       explain: "Serverless usage-based billing often improves efficiency for bursty or highly variable traffic."
     },
     {
-      task: "4.4",
+      task: "4.2",
       q: (s) => `${s} wants to forecast spend trends and prevent budget overruns early. Which process is most aligned with AWS cost optimization guidance?`,
       opts: [
         "Continuous cost monitoring with budgets, anomaly detection, and periodic optimization review",

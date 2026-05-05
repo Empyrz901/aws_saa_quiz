@@ -162,7 +162,7 @@
       explain: "Balanced key distribution and capacity autoscaling reduce throttling risk and improve consistency."
     },
     {
-      task: "3.3",
+      task: "3.2",
       q: (s) => `${s} runs short-lived unpredictable background tasks and wants no idle server fleet. Which compute model best fits?`,
       opts: [
         "AWS Lambda",
@@ -174,7 +174,7 @@
       explain: "Lambda scales per request and eliminates always-on capacity overhead for bursty short tasks."
     },
     {
-      task: "3.1",
+      task: "3.4",
       q: (s) => `${s} receives uploads from globally distributed clients and wants faster transfers to S3. Which feature helps?`,
       opts: [
         "S3 Transfer Acceleration",
