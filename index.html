@@ -1399,10 +1399,15 @@ function selectOption(idx) {
     return;
   }
 
-  // Single-answer practice mode: immediate feedback keeps one-answer questions quick.
+  // Single-answer practice mode: select first; Next submits.
   if (!q.multi) {
     multiSelections = [idx];
-    submitSingle();
+    const optEls = document.querySelectorAll('.option');
+    optEls.forEach(el => {
+      const i = parseInt(el.dataset.idx);
+      el.classList.toggle('picked', i === idx);
+    });
+    document.getElementById('btn-submit').classList.add('hidden');
     return;
   }
 
@@ -1532,8 +1537,9 @@ function prevQuestion() {
 }
 
 function nextQuestion() {
-  if (!officialSimulation && !answered && quiz[current] && quiz[current].multi) {
-    if (multiSelections.length === quiz[current].ans.length) submitMulti();
+  if (!officialSimulation && !answered && quiz[current]) {
+    const requiredCount = quiz[current].multi ? quiz[current].ans.length : 1;
+    if (multiSelections.length === requiredCount) submitAnswer();
     return;
   }
 
